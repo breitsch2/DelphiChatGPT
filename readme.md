@@ -2,13 +2,14 @@
 
 #### By Bruno Fierens
 
-#### Access the ChatGPT REST API from a Delphi app
+#### Access the ChatGPT REST API from a Delphi or maXbox app
 
 ## Technologies Used
 
 * Delphi VCL or FMX / Lazarus
 * TMS FNC Core
 * Delphi JSON
+* WinHttp.WinHttpRequest.5.1
 
 ## Description
 
@@ -20,7 +21,7 @@ This is a simple demo of how to use the ChatGPT API from a Delphi or Lazarus app
 * TMS FNC Core from https://www.tmssoftware.com/site/tmsfnccore.asp
 * Get the ChatGPT API key from https://beta.openai.com/account/api-keys 
 
-
+![1202_chatgpt_maxboxscript](https://user-images.githubusercontent.com/109789632/228959260-861d3a0f-1d9e-42a5-85c7-bf0cc2111c89.png)
 
 ## Known Bugs
 
