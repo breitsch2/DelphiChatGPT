@@ -1,0 +1,325 @@
+program ChatGPT_API3_mX4;
+
+//https://rosettacode.org/wiki/100_prisoners#Pascal
+//https://github.com/ssut/py-googletrans/issues/268
+
+const
+  rounds  = 1000; //100000; //100000;
+  
+  AURLS='https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=%s&tl=%s&q=%s';
+  AURL='https://translate.googleapis.com/translate_a/single';
+  UAGENT ='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0';
+  
+  TESTRES_JSON = '{"id":"cmpl-6zpQsiothxZUox0WCKWNdJKj6VDa7","object":"text_completion","created":1680193734,"model":"text-davinci-003","choices":[{"text":"\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is designed to be easy to use and provides a powerful scripting language for creating applications, games, and other software. maXbox4 is based on the popular BASIC language and includes a wide range of features, including support for object-oriented programming, graphical user interfaces, and more.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":77,"total_tokens":83}} ';
+
+
+function TranslateGoogle(const Text, LangSrc, LangTarget: string): string; forward;
+
+function TranslateGoogle(const Text, LangSrc, LangTarget: string): string;
+var
+  //HTTP: THTTPClient;
+  Response: TStringStream;
+   URI : TIdUri; //synTURI;
+     jo: TJSONObject;  
+   uri2: TURL;
+begin
+  Result := '';
+  if Text = ''  then
+    writeln('dont be empty else Exit;');
+  //HTTP := THTTPClient.Create;
+  Response := TStringStream.Create('');
+  
+  try
+    URI := TidURI.Create('https://translate.googleapis.com/translate_a/single');
+    URI2 := TURL.Create('https://translate.googleapis.com/translate_a/single');
+    //URI := synTURI.Create;
+    //URI.params:= 'client=gtx';
+    with uri2 do begin
+      parameters:= '?client=dict-chrome-ex&';
+      parameters:= parameters+'sl='+ LangSrc+'&';
+    //URI.AddParameter('tl', LangTarget);
+      parameters:= parameters+'tl='+ LangTarget+'&';
+    //URI2.Parameters:= 'hl,'+ LangTarget;
+    //URI.AddParameter('dt', 't');
+    //URI.AddParameter('dt', 'bd');
+    //URI.AddParameter('dj', '1');
+    //URI.AddParameter('ie', 'UTF-8');
+    //URI.AddParameter('source', 'icon');
+    //URI.AddParameter('tk', '467103.467103');
+      Parameters:= parameters+ 'q='+text; 
+    //Replacestring(text, '...', '', [rfReplaceAll]).Replace(#13#10, ' ', [rfReplaceAll]);
+    end;
+    try
+       uri2.url:= uri2.url+uri2.parameters;
+       writeln(URI2.parameters);
+       writeln('add '+uri2.url)
+       writeln(URI2.EncodeUrl(uri2.url,true));
+       //HTTPGet(URI2.EncodeUrl(uri2.url,true),response);
+       //HTTPGet(URI2.EncodeUrl(uri2.url+URI2.parameters,true),response);
+       HTTPGet((uri2.url+URI2.parameters),response);
+       writeln('resp '+uri2.document);
+       writeln('resp '+Response.DataString);
+      begin
+        //jo:= TJSONObject.Create4(Response.DataString);
+        //var JSON := TJSONObject.ParseJSONValue(UTF8ToString(RawByteString(Response.DataString)));
+        if Assigned(jo) then
+        try
+          //((Result := JSON.GetValue('sentences[0].trans', '');
+          //result:= jo.getstring('sentences[0].trans');
+        finally
+          //jo.Free;
+        end;
+      end;
+    except
+      //Result := '';
+      writeln('EHTTP: '+ExceptiontoString(exceptiontype, exceptionparam)); 
+    end;
+  finally
+    //HTTP.Free;
+    Response.Free;
+    uri2.free;
+    uri.free;
+  end;
+end;
+
+function Text_to_translate_API2(AURL, aclient,langorig,langtarget,atext: string):string;
+var httpq: THttpConnectionWinInet;
+    rets: TStringStream;  
+    heads: TStrings; iht:IHttpConnection2; 
+    jo: TJSON; jarr:TJsonArray2; jobj: TJsonObject2;
+    tmpstr: string; 
+begin
+  httpq:= THttpConnectionWinInet.Create(true); 
+  rets:= TStringStream.create('');
+  heads:= TStringlist.create;     
+   try
+     {heads.add('client='+aclient);
+     heads.add('sl=auto');
+     heads.add('tl='+ langTarget);
+     heads.add('t='+atext); }
+     heads.add('User-Agent='+UAGENT);
+     iht:= httpq.setHeaders(heads);
+     //iht:= httpq.setParameters(heads);
+     httpq.Get(Format(AURLS,[langorig,langtarget,atext]),rets);
+     writeln('server: '+Httpq.GetResponseHeader('server'));
+     //writeln(Httpq.GetResponseHeader('pragma'));  
+     //tmpstr:= StringReplace(rets.datastring, '[','{[',[rfReplaceAll, rfIgnoreCase]);  
+     //tmpstr:= StringReplace(tmpstr, ']',']}',[rfReplaceAll, rfIgnoreCase]);     
+      jo:= TJSON.Create(); 
+      jo.parse(rets.datastring)   
+      jarr:= jo.JsonArray;
+      //writeln(jarr.items[0].stringify);
+      if httpq.getresponsecode=200 Then result:=jarr[0].stringify
+       else result:='Failed:'+
+             itoa(Httpq.getresponsecode)+Httpq.GetResponseHeader('message');    
+   except 
+      writeln('EWI_HTTP: '+ExceptiontoString(exceptiontype,exceptionparam));
+   finally
+     //httpq.free;
+     httpq:= Nil;
+     heads.Free;
+     rets.Free;
+     jo.free;
+   end;                  
+end;
+
+const CHATGPT_APIKEY = 'sk-jAjqdWoqZLGsh7nXf5i8T3BlbkFJ9CYRk'; 
+const CHATGPT_APIKEY1 = 'sk-Lx_________use your own key___________________';
+
+
+{$I .\OPENAIAPIKEY.INC}
+
+function AskChatGPT(askstream: string): string;
+var
+  httpReq,hr: Olevariant;
+  LPostdata: string;
+  LJsonValue: TJsonValue;
+  LJsonArray: TJsonArray;
+  //LJSonString: TJsonString;
+  jo: TJSON;
+begin
+  Result := '';
+  
+  LPostData:= '{' +
+    '"model": "text-davinci-003",'+
+    //'"prompt": "' + AQuestion + '",'+
+    '"prompt": "%s",'+
+    '"max_tokens": 2048,'+
+    '"temperature": 0.1'+
+    '}';
+
+  // create instance of TMS FNC Cloud Base class
+  httpReq:= CreateOleObject('WinHttp.WinHttpRequest.5.1');
+  jo:= TJSON.Create();
+  try             
+    hr:= httpReq.Open('POST',
+               'https://api.openai.com/v1/completions', false);
+    //httpReq.setRequestheader('user-agent',UAGENT);
+    httpReq.setRequestheader('content-type','application/json'); 
+    httpReq.setRequestheader('Authorization','Bearer ' + CHATGPT_APIKEY2);
+    if hr= S_OK then HttpReq.Send(format(LPostData,[askstream]));
+    //writeln(format(JTESTDATA,[feedstream]));
+    If HttpReq.Status = 200 Then
+       result:= HttpReq.responseText
+    Else result:= 'Failed at getting response:'+itoa(HttpReq.Status)+HttpReq.responseText;
+    //writeln('debug response '+HttpReq.GetAllResponseHeaders);  
+    jo.parse(result) 
+    result:='Answer2: '+jo.values['choices'].asarray[0].asobject['text'].asstring;
+  finally
+    jo.Free;
+    httpreq:= unassigned;  
+  end;                
+    // Use JSON for the REST API calls and set API KEY via Authorization header
+     //LCb.Request.AddHeader('Authorization','Bearer ' + CHATGPT_APIKEY);
+    //LCb.Request.AddHeader('Content-Type','application/json');
+
+    // Select HTTPS POST method, set POST data and specify endpoint URL
+    {LCb.Request.Method := rmPOST;
+    LCb.Request.PostData := LPostData;
+    LCb.Request.Host := 'https://api.openai.com';
+    LCb.Request.Path := 'v1/completions';  }
+
+    // Execute the HTTPS POST request synchronously (last param Async = false)
+    //LCb.ExecuteRequest(nil,nil,false);
+    // Process returned JSON when request was successful
+  (*  if Lcb.RequestResult.Success then begin
+      LJsonValue := TJSonObject.ParseJSONValue(Lcb.RequestResult.ResultString);
+      LJsonValue := LJsonValue.GetValue<TJSonValue>('choices');
+      if LJsonValue is TJSonArray then
+      begin
+        LJSonArray := LJsonValue as TJSonArray;
+        LJSonString := LJSonArray.Items[0].GetValue<TJSONString>('text');
+        Result := LJSonString.Value;
+      end
+      else
+    end
+    else
+      raise Exception.Create('HTTP response code: '+ LCb.RequestResult.ResponseCode.ToString);
+  finally
+    LCb.Free;
+  end;  *)
+end;
+
+
+var atext: string;  jo:TJSON;
+
+Begin //@main
+  //init
+  
+ // TranslateGoogle('bonjour mes amis', 'auto', 'en'); 
+  //atext:= 'bonjour mes amis da la ville';
+  atext:= urlencode('A research paper suggests improving GPT-4 performance by 30% by having it consider why it was wrong.');
+ // atext:= 'bonjour mes amis';
+  //atext:= 'guten tag meine freunde';                                     
+  //writeln((Text_to_traslate_API2(AURL, '','dict-chrome', 'es', atext)));
+  //writeln(utf8ToAnsi(Text_to_traslate_API2(AURL,'dict-chrome-ex','fr','es',atext)));
+  writeln(utf8ToAnsi(Text_to_translate_API2(AURL,'dict-chrome-ex','auto','it',atext)));
+    sleep(500);
+    
+    {jo:= TJSON.Create();
+    try
+    jo.parse(TESTRES_JSON) 
+    writeln('answer: '+jo.values['choices'].asarray[0].asobject['text'].asstring);
+    except
+      writeln(ExceptiontoString(exceptiontype,exceptionparam));
+    end;  
+    jo.free;   //}
+    
+   //writeln(AskChatGPT('how large is the earth?'));
+    writeln(AskChatGPT('What is maXbox4?'));
+  
+  //OneCompareRun(100);
+End.
+
+doc: Needs to be dict-chrome-ex or else you'll get a 403 error.
+     Exception: WinHttp.WinHttpRequest: The operation timed out
+     
+     https://help.openai.com/en/articles/6882433-incorrect-api-key-provided
+
+{"id":"cmpl-6zp3hsVt6HzUdDiCVKVkPcE0umXGm","object":"text_completion","created":1680192297,"model":"text-davinci-003","choices":[{"text":"\n\nThe Earth has a mean radius of 3,959 miles (6,371 kilometers).","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":5,"completion_tokens":20,"total_tokens":25}}
+
+{"id":"cmpl-6zp8eDsADQT4Br6NKkFT3jJPYKJHU","object":"text_completion","created":1680192604,"model":"text-davinci-003","choices":[{"text":"\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is designed to be easy to use and provides a powerful scripting language for creating applications, games, and other software. maXbox4 is based on the popular BASIC language and includes a wide range of features, including support for object-oriented programming, graphical user interfaces, and more.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":77,"total_tokens":83}}
+
+answer2: 
+
+maXbox4 is a free scripting tool for creating and running scripts written in the PASCAL language. It is designed to be used for educational purposes and can be used to create programs for Windows, Linux, and Mac OS X. maXbox4 includes a debugger, an editor, and a compiler, and can be used to create programs for a variety of tasks, including game development, web development, and automation.
+ mX4 executed: 30/03/2023 21:17:56  Runtime: 0:0:3.489  Memload: 47% use
+
+answer2: 
+
+maXbox4 is a free scripting tool and open source object pascal ide for creating Windows, Linux, and macOS applications. It is designed to be easy to use and provides a wide range of features, including an integrated debugger, code completion, syntax highlighting, and more. maXbox4 is based on the Free Pascal compiler and Lazarus IDE.
+ mX4 executed: 30/03/2023 21:22:19  Runtime: 0:0:4.92  Memload: 47% use
+
+ref:
+https://github.com/rilyu/json4delphi/issues/7
+
+Ref: 1000    mX4 executed: 27/03/2023 17:11:29  Runtime: 0:0:3.740  Memload: 40% use
+     10000   mX4 executed: 27/03/2023 17:24:50  Runtime: 0:0:39.975  Memload: 41% use
+     100000  mX4 executed: 27/03/2023 17:32:31  Runtime: 0:6:31.397  Memload: 38% use
+   mX4 byte code executed: 27/03/2023 17:40:55  Runtime: 0:4:36.349  Memload: 40% use   
+     
+Checking 20 prisoners    '????? ???? ???'
+Optimized  100.00% get pardoned out of 100000 checking max 20
+Optimized   89.68% get pardoned out of 100000 checking max 18
+Optimized   78.20% get pardoned out of 100000 checking max 16
+Optimized   65.19% get pardoned out of 100000 checking max 14
+Optimized   50.57% get pardoned out of 100000 checking max 12
+Optimized   33.31% get pardoned out of 100000 checking max 10
+Optimized   15.21% get pardoned out of 100000 checking max 8
+Optimized    3.48% get pardoned out of 100000 checking max 6
+Optimized    0.12% get pardoned out of 100000 checking max 4
+Optimized    0.00% get pardoned out of 100000 checking max 2
+Optimized    0.00% get pardoned out of 100000 checking max 0
+
+Randomly   100.00% get pardoned out of 100000 checking max 20
+Randomly    13.64% get pardoned out of 100000 checking max 18
+Randomly     1.39% get pardoned out of 100000 checking max 16
+Randomly     0.11% get pardoned out of 100000 checking max 14
+Randomly     0.01% get pardoned out of 100000 checking max 12
+Randomly     0.00% get pardoned out of 100000 checking max 10
+Randomly     0.00% get pardoned out of 100000 checking max 8
+Randomly     0.00% get pardoned out of 100000 checking max 6
+Randomly     0.00% get pardoned out of 100000 checking max 4
+Randomly     0.00% get pardoned out of 100000 checking max 2
+Randomly     0.00% get pardoned out of 100000 checking max 0
+
+
+ mX4 executed: 27/03/2023 17:32:31  Runtime: 0:6:31.397  Memload: 38% use     
+ 
+Checking 100 prisoners
+Optimized  100.00% get pardoned out of 1000 checking max 100
+Optimized   88.70% get pardoned out of 1000 checking max 90
+Optimized   80.20% get pardoned out of 1000 checking max 80
+Optimized   66.00% get pardoned out of 1000 checking max 70
+Optimized   50.10% get pardoned out of 1000 checking max 60
+Optimized   31.10% get pardoned out of 1000 checking max 50
+Optimized   12.50% get pardoned out of 1000 checking max 40
+Optimized    2.60% get pardoned out of 1000 checking max 30
+Optimized    0.00% get pardoned out of 1000 checking max 20
+Optimized    0.00% get pardoned out of 1000 checking max 10
+Optimized    0.00% get pardoned out of 1000 checking max 0
+
+Randomly   100.00% get pardoned out of 1000 checking max 100
+Randomly     0.00% get pardoned out of 1000 checking max 90
+Randomly     0.00% get pardoned out of 1000 checking max 80
+Randomly     0.00% get pardoned out of 1000 checking max 70
+Randomly     0.00% get pardoned out of 1000 checking max 60
+Randomly     0.00% get pardoned out of 1000 checking max 50
+Randomly     0.00% get pardoned out of 1000 checking max 40
+Randomly     0.00% get pardoned out of 1000 checking max 30
+Randomly     0.00% get pardoned out of 1000 checking max 20
+Randomly     0.00% get pardoned out of 1000 checking max 10
+Randomly     0.00% get pardoned out of 1000 checking max 0
+
+
+ mX4 executed: 27/03/2023 17:52:23  Runtime: 0:4:58.888  Memload: 39% use
+
+Doc: The task
+
+    Simulate several thousand instances of the game where the prisoners randomly open drawers
+    Simulate several thousand instances of the game where the prisoners use the optimal strategy mentioned in the Wikipedia article, of:
+
+        First opening the drawer whose outside number is his prisoner number.
+        If the card within has his number then he succeeds otherwise he opens the drawer with the same number as that of the revealed card. (until he opens his maximum).
+     
+
