@@ -1,0 +1,252 @@
+program ChatGPT_API31_mX4;
+
+//https://rosettacode.org/wiki/100_prisoners#Pascal
+//https://github.com/ssut/py-googletrans/issues/268
+
+const
+   
+  AURLS='https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=%s&tl=%s&q=%s';
+  AURL='https://translate.googleapis.com/translate_a/single';
+  UAGENT ='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0';
+  
+  TESTRES_JSON = '{"id":"cmpl-6zpQsiothxZUox0WCKWNdJKj6VDa7","object":"text_completion","created":1680193734,"model":"text-davinci-003","choices":[{"text":"\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is designed to be easy to use and provides a powerful scripting language for creating applications, games, and other software. maXbox4 is based on the popular PASCAL language and includes a wide range of features, including support for object-oriented programming, graphical user interfaces, and more.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":77,"total_tokens":83}} ';
+
+
+function Text_to_translate_API2(AURL, aclient,langorig,langtarget,atext: string):string; forward;
+
+function Text_to_translate_API2(AURL, aclient,langorig,langtarget,atext: string):string;
+var httpq: THttpConnectionWinInet;
+    rets: TStringStream;  
+    heads: TStrings; iht:IHttpConnection2; 
+    jo: TJSON; jarr:TJsonArray2; jobj: TJsonObject2;
+    tmpstr: string; 
+begin
+  httpq:= THttpConnectionWinInet.Create(true); 
+  rets:= TStringStream.create('');
+  heads:= TStringlist.create;     
+   try
+     {heads.add('client='+aclient);
+     heads.add('sl=auto');
+     heads.add('tl='+ langTarget);
+     heads.add('t='+atext); }
+     heads.add('User-Agent='+UAGENT);
+     iht:= httpq.setHeaders(heads);
+     //iht:= httpq.setParameters(heads);
+     httpq.Get(Format(AURLS,[langorig,langtarget,atext]),rets);
+     writeln('server: '+Httpq.GetResponseHeader('server'));
+     //writeln(Httpq.GetResponseHeader('pragma'));  
+     //tmpstr:= StringReplace(rets.datastring, '[','{[',[rfReplaceAll, rfIgnoreCase]);  
+     //tmpstr:= StringReplace(tmpstr, ']',']}',[rfReplaceAll, rfIgnoreCase]);     
+      jo:= TJSON.Create(); 
+      jo.parse(rets.datastring)   
+      jarr:= jo.JsonArray;
+      //writeln(jarr.items[0].stringify);
+      if httpq.getresponsecode=200 Then result:=jarr[0].stringify
+       else result:='Failed:'+
+             itoa(Httpq.getresponsecode)+Httpq.GetResponseHeader('message');    
+   except 
+      writeln('EWI_HTTP: '+ExceptiontoString(exceptiontype,exceptionparam));
+   finally
+     //httpq.free;
+     httpq:= Nil;
+     heads.Free;
+     rets.Free;
+     jo.free;
+   end;                  
+end;
+
+
+Const CHATGPT_APIKEY1 = 'sk-Lx_________use your own key___________________';
+
+{$I .\OPENAIAPIKEY.INC}
+
+function AskChatGPT(askstream: string): string;
+var
+  httpReq,hr: Olevariant;
+  JPostdata: string;
+  LJsonValue: TJsonValue;
+  LJsonArray: TJsonArray;
+  jo: TJSON;
+begin
+  Result:= '';
+  JPostData:= '{' +
+    '"model": "text-davinci-003",'+
+    //'"prompt": "' + AQuestion + '",'+
+    '"prompt": "%s",'+
+    '"max_tokens": 2048,'+
+    '"temperature": 0.1'+
+    '}';
+
+  // Use JSON for the REST API calls and set API KEY via Authorization header
+  httpReq:= CreateOleObject('WinHttp.WinHttpRequest.5.1');
+  jo:= TJSON.Create();
+  try             
+    hr:= httpReq.Open('POST',
+               'https://api.openai.com/v1/completions', false);
+    //httpReq.setRequestheader('user-agent',UAGENT);
+    // Select HTTPS POST method, set POST data and specify endpoint URL
+    httpReq.setRequestheader('content-type','application/json'); 
+    httpReq.setRequestheader('Authorization','Bearer '+ CHATGPT_APIKEY2);
+    if hr= S_OK then HttpReq.Send(format(JPostData,[askstream]));
+    //writeln(format(JTESTDATA,[feedstream]));
+    If HttpReq.Status = 200 Then
+       result:= HttpReq.responseText
+    Else result:= 'Failed at getting response:'+itoa(HttpReq.Status)+HttpReq.responseText;
+    //writeln('debug response '+HttpReq.GetAllResponseHeaders); 
+    // Process returned JSON when request was successful 
+    jo.parse(result) 
+    result:='Answer2: '+jo.values['choices'].asarray[0].asobject['text'].asstring;
+  finally
+    jo.Free;
+    httpreq:= unassigned;  
+  end;                
+end;
+
+
+function TALHTTPClient_AskChatGPT(feedstream, apiKey: string;
+                       aResponseContentStream:TStream;
+                       aResponseContentHeader:TALHTTPResponseHeader):string;
+Var
+   FRequestHeader: TALHTTPRequestHeader;
+   aPoststream: TStream;
+   JPostdata: string;
+begin
+  JPostData:= '{' +
+    '"model": "text-davinci-003",'+
+    //'"prompt": "' + AQuestion + '",'+
+    '"prompt": "%s",'+
+    '"max_tokens": 2048,'+
+    '"temperature": 0.1'+
+    '}';
+    
+  with TALWininetHttpClient.create do begin
+    Url:= 'https://api.openai.com/v1/completions';
+    RequestMethod:= HTTPmt_Post; //HTTPrm_Post;
+    //RequestHeader.UserAgent:= UAGENT;
+    RequestHeader.ContentType:= 'application/json';
+    RequestHeader.Authorization:= 'Bearer '+ CHATGPT_APIKEY2;
+    //RequestHeader.RawHeaderText:='Authorization: Bearer '+ CHATGPT_APIKEY2;
+    try
+      aPoststream:= TStringStream.create(format(JPostData,[feedstream]));
+      result:= Post3(Url, aPoststream); //overload;
+    finally
+      Free;
+      aPostStream.Free;
+    end; 
+  end; //with   
+end; 
+
+function WininetCompiled_AskChatGPT(aurl, askstream: string):string;
+var httpq: THttpConnectionWinInet;
+    rets, postdata: TStringStream;  
+    heads: TStrings; iht:IHttpConnection2; 
+    jo: TJSON; JPostdata: string; 
+begin
+  JPostData:= '{' +
+    '"model": "text-davinci-003",'+
+    //'"prompt": "' + AQuestion + '",'+
+    '"prompt": "%s",'+
+    '"max_tokens": 2048,'+
+    '"temperature": 0.21'+
+    '}';
+    
+  httpq:= THttpConnectionWinInet.Create(true);  //true:ARaiseExceptionOnError
+  rets:= TStringStream.create('');
+  postdata:= TStringStream.create('');
+  heads:= TStringlist.create;     
+   try
+     heads.add('User-Agent='+UAGENT);
+     heads.add('Authorization=Bearer '+CHATGPT_APIKEY2);
+     iht:= httpq.setHeaders(heads);
+     //iht:= httpq.setParameters(heads);
+     iht:= httpq.SetContentTypes('application/json');
+     StringToStream(format(JPostData,[askstream]), postdata);
+     httpq.Post(AURL,postdata,rets);
+     writeln('chatserver: '+Httpq.GetResponseHeader('server'));
+     writeln('date: '+Httpq.GetResponseHeader('date'));  
+     jo:= TJSON.Create(); 
+     jo.parse(rets.datastring)  
+     if httpq.getresponsecode=200 Then result:=
+                  jo.values['choices'].asarray[0].asobject['text'].asstring
+        else result:='Failed:'+
+              itoa(Httpq.getresponsecode)+Httpq.GetResponseHeader('server');    
+   except 
+      writeln('EWI_HTTPS: '+ExceptiontoString(exceptiontype,exceptionparam));
+   finally
+     //httpq.free;
+     httpq:= Nil;
+     heads.Free;
+     rets.Free;
+     jo.free;
+   end;                  
+end; 
+
+
+var atext: string; jo:TJSON;
+Begin //@main
+  //atext:= 'bonjour mes amis da la ville';
+  atext:= URLEncode('A research paper suggests improving GPT-4 performance by 30% by having it consider why it was wrong.');
+ // atext:= 'bonjour mes amis';
+  //writeln((Text_to_traslate_API2(AURL, '','dict-chrome', 'es', atext)));
+  //writeln(utf8ToAnsi(Text_to_traslate_API2(AURL,'dict-chrome-ex','fr','es',atext)));
+  writeln(utf8ToAnsi(Text_to_translate_API2(AURL,'dict-chrome-ex','auto','it',atext)));
+  sleep(500);
+    
+    {jo:= TJSON.Create();
+    try
+    jo.parse(TESTRES_JSON) 
+    writeln('answer: '+jo.values['choices'].asarray[0].asobject['text'].asstring);
+    except
+      writeln(ExceptiontoString(exceptiontype,exceptionparam));
+    end;  
+    jo.free;   //}
+    
+   //writeln(AskChatGPT('how large is the earth?'));
+   // writeln(AskChatGPT('What is maXbox4?'));
+   //writeln(AskChatGPT('What is similar to maXbox4?'));
+   
+   //writeln('answer3 '+TALHTTPClient_AskChatGPT('how large is the moon?','',Nil,Nil));
+   
+   writeln('answer4: '+WininetCompiled_AskChatGPT('https://api.openai.com/v1/completions',
+                                                    'how large is the universe?'));
+End.
+
+doc: Needs to be dict-chrome-ex or else you'll get a 403 error.
+     Exception: WinHttp.WinHttpRequest: The operation timed out
+     
+     https://help.openai.com/en/articles/6882433-incorrect-api-key-provided
+
+{"id":"cmpl-6zp3hsVt6HzUdDiCVKVkPcE0umXGm","object":"text_completion","created":1680192297,"model":"text-davinci-003","choices":[{"text":"\n\nThe Earth has a mean radius of 3,959 miles (6,371 kilometers).","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":5,"completion_tokens":20,"total_tokens":25}}
+
+{"id":"cmpl-6zp8eDsADQT4Br6NKkFT3jJPYKJHU","object":"text_completion","created":1680192604,"model":"text-davinci-003","choices":[{"text":"\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is designed to be easy to use and provides a powerful scripting language for creating applications, games, and other software. maXbox4 is based on the popular BASIC language and includes a wide range of features, including support for object-oriented programming, graphical user interfaces, and more.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":77,"total_tokens":83}}
+
+Do you know maXbox4?
+Yes, maXbox4 is a free scripter tool and IDE for making applications in various programming languages, including Visual Basic, C#, and JavaScript. It is designed to be easy to use and provides a range of features to help users create applications quickly and easily.
+
+Answer2: 
+
+maXbox4 is a free scripting tool for creating and running scripts written in the PASCAL language. It is designed to be used for educational purposes and can be used to create programs for Windows, Linux, and Mac OS X. maXbox4 includes a debugger, an editor, and a compiler, and can be used to create programs for a variety of tasks, including game development, web development, and automation.
+ mX4 executed: 30/03/2023 21:17:56  Runtime: 0:0:3.489  Memload: 47% use
+
+answer2: 
+
+maXbox4 is a free scripting tool and open source object pascal ide for creating Windows, Linux, and macOS applications. It is designed to be easy to use and provides a wide range of features, including an integrated debugger, code completion, syntax highlighting, and more. maXbox4 is based on the Free Pascal compiler and Lazarus IDE.
+ mX4 executed: 30/03/2023 21:22:19  Runtime: 0:0:4.92  Memload: 47% use
+ 
+Answer2: 
+
+maXbox4 is a free and open source software development tool for creating and running programs written in the Object Pascal programming language. It is designed to be used with the Lazarus IDE, and is based on the Delphi compiler. maXbox4 is a powerful tool for creating applications for Windows, Linux, Mac OS X, iOS, and Android. It includes a wide range of features, such as a visual designer, debugging tools, and a code editor.
+ mX4 executed: 30/03/2023 22:27:07  Runtime: 0:0:3.824  Memload: 49% use
+
+ref: https://github.com/rilyu/json4delphi/issues/7
+
+ mX4 executed: 27/03/2023 17:52:23  Runtime: 0:4:58.888  Memload: 39% use
+
+Doc: The task
+    Simulate several thousand instances of the game where the prisoners randomly open drawers
+    Simulate several thousand instances of the game where the prisoners use the optimal strategy mentioned in the Wikipedia article, of:
+
+    First opening the drawer whose outside number is his prisoner number.
+    If the card within has his number then he succeeds otherwise he opens the drawer with the same number as that of the revealed card. (until he opens his maximum).
+     
+
