@@ -44,6 +44,10 @@ begin
   end; //with   
 end; 
 ```
+## Package Diagram
+
+![TRestClient_pac2](https://user-images.githubusercontent.com/109789632/230425938-274da234-e225-4be1-8689-5bbac881ff20.png)
+
 
 ## Description
 
