@@ -1,0 +1,247 @@
+Version:0.9
+StartHTML:0000000105
+EndHTML:0000044194
+StartFragment:0000001053
+EndFragment:0000044178
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>mXScriptasHTML</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="generator" content="SynEdit HTML exporter" />
+<style type="text/css">
+<!--
+body { color: #000000; background-color: #FFFFFF; }
+.pas1-assembler { }
+.pas1-character { color: #0066CC; text-decoration: underline; }
+.pas1-comment { color: #000080; font-style: italic; }
+.pas1-float { color: #00FF00; }
+.pas1-hexadecimal { color: #FF00FF; }
+.pas1-identifier { }
+.pas1-number { color: #FF0000; }
+.pas1-preprocessor { font-style: italic; }
+.pas1-reservedword { color: #000080; font-weight: bold; }
+.pas1-space { }
+.pas1-string { color: #008080; }
+.pas1-symbol { color: #FF0000; }
+-->
+</style>
+</head>
+<body>
+<!--StartFragment--><pre><code><span class="pas1-reservedword">program</span><span class="pas1-space"> ChatGPT_API35_mX4_3</span><span class="pas1-symbol">;
+
+</span><span class="pas1-comment">//https://github.com/ssut/py-googletrans/issues/268
+//TODO: test with another api-client : THTTPSender  plus try except()
+//https://github.com/breitsch2/DelphiChatGPT
+//https://softwareschule.code.blog/2023/04/01/how-to-chat-with-gpt/
+
+</span><span class="pas1-reservedword">const
+</span><span class="pas1-space">  AURLS</span><span class="pas1-symbol">=</span><span class="pas1-string">'https://clients5.google.com/translate_a/t?client=dict-chrome-ex&amp;sl=%s&amp;tl=%s&amp;q=%s'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">  AURL</span><span class="pas1-symbol">=</span><span class="pas1-string">'https://translate.googleapis.com/translate_a/single'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">  UAGENT </span><span class="pas1-symbol">=</span><span class="pas1-string">'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">  
+  TESTRES_JSON </span><span class="pas1-symbol">=</span><span class="pas1-space"> </span><span class="pas1-string">'{&quot;id&quot;:&quot;cmpl-6zpQsiothxZUox0WCKWNdJKj6VDa7&quot;,&quot;object&quot;:&quot;text_completion&quot;,&quot;created&quot;:1680193734,&quot;model&quot;:&quot;text-davinci-003&quot;,&quot;choices&quot;:[{&quot;text&quot;:&quot;\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is designed to be easy to use and provides a powerful scripting language for creating applications, games, and other software. maXbox4 is based on the popular PASCAL language and includes a wide range of features, including support for object-oriented programming, graphical user interfaces, and more.&quot;,&quot;index&quot;:0,&quot;logprobs&quot;:null,&quot;finish_reason&quot;:&quot;stop&quot;}],&quot;usage&quot;:{&quot;prompt_tokens&quot;:6,&quot;completion_tokens&quot;:77,&quot;total_tokens&quot;:83}} '</span><span class="pas1-symbol">;
+
+
+</span><span class="pas1-reservedword">Const</span><span class="pas1-space"> CHATGPT_APIKEY1 </span><span class="pas1-symbol">=</span><span class="pas1-space"> </span><span class="pas1-string">'sk-Lx_________use your own key first_______________'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">                                                               
+</span><span class="pas1-preprocessor">{$I .\OPENAIAPIKEY.INC}
+
+</span><span class="pas1-comment">//https://github.com/GussCloud/alcinoe-sources/blob/main/ALWininetHttpClient.pas
+//https://github.com/GussCloud/alcinoe-sources/blob/main/ALHttpClient.pas
+
+</span><span class="pas1-reservedword">function</span><span class="pas1-space"> TALHTTPClient3_AskChatGPT</span><span class="pas1-symbol">(</span><span class="pas1-identifier">askstream</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+                               aResponseHeader</span><span class="pas1-symbol">:</span><span class="pas1-identifier">TALHTTPResponseHeader2</span><span class="pas1-symbol">):</span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">var</span><span class="pas1-space"> pstrm</span><span class="pas1-symbol">:</span><span class="pas1-space"> TStream</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    JPostdat</span><span class="pas1-symbol">,</span><span class="pas1-space"> vURL</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    jo</span><span class="pas1-symbol">:</span><span class="pas1-space"> TJSON</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">begin
+</span><span class="pas1-space">  JPostDat</span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'{'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;model&quot;: &quot;text-davinci-003&quot;,'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;prompt&quot;: &quot;%s&quot;,'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;max_tokens&quot;: 2048,'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;temperature&quot;: 0.15}'</span><span class="pas1-symbol">;
+
+</span><span class="pas1-space">  </span><span class="pas1-reservedword">with</span><span class="pas1-space"> TALWininetHttpClient2</span><span class="pas1-symbol">.</span><span class="pas1-identifier">create </span><span class="pas1-reservedword">do</span><span class="pas1-space"> </span><span class="pas1-reservedword">begin
+</span><span class="pas1-space">    vURL</span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'https://api.openai.com/v1/completions'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    </span><span class="pas1-comment">//RequestHeader.UserAgent:= UAGENT;
+</span><span class="pas1-space">    RequestHeader</span><span class="pas1-symbol">.</span><span class="pas1-identifier">ContentType</span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'application/json'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    RequestHeader</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Authorization</span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'Bearer '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">CHATGPT_APIKEY2</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    </span><span class="pas1-reservedword">try
+</span><span class="pas1-space">      pstrm</span><span class="pas1-symbol">:=</span><span class="pas1-space"> TStringStream</span><span class="pas1-symbol">.</span><span class="pas1-identifier">create</span><span class="pas1-symbol">(</span><span class="pas1-identifier">format</span><span class="pas1-symbol">(</span><span class="pas1-identifier">JPostDat</span><span class="pas1-symbol">,[</span><span class="pas1-identifier">askstream</span><span class="pas1-symbol">]));
+</span><span class="pas1-space">      jo</span><span class="pas1-symbol">:=</span><span class="pas1-space"> TJSON</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Create</span><span class="pas1-symbol">();</span><span class="pas1-space"> 
+      jo</span><span class="pas1-symbol">.</span><span class="pas1-identifier">parse</span><span class="pas1-symbol">(</span><span class="pas1-identifier">Post3</span><span class="pas1-symbol">(</span><span class="pas1-identifier">vURL</span><span class="pas1-symbol">,</span><span class="pas1-space"> pstrm</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-symbol">[]))</span><span class="pas1-space"> 
+      result</span><span class="pas1-symbol">:=</span><span class="pas1-space"> jo</span><span class="pas1-symbol">.</span><span class="pas1-identifier">values</span><span class="pas1-symbol">[</span><span class="pas1-string">'choices'</span><span class="pas1-symbol">].</span><span class="pas1-identifier">asarray</span><span class="pas1-symbol">[0].</span><span class="pas1-identifier">asobject</span><span class="pas1-symbol">[</span><span class="pas1-string">'text'</span><span class="pas1-symbol">].</span><span class="pas1-identifier">asstring</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    </span><span class="pas1-reservedword">finally
+</span><span class="pas1-space">      Free</span><span class="pas1-symbol">;
+</span><span class="pas1-space">      jo</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Free</span><span class="pas1-symbol">;
+</span><span class="pas1-space">      pStrm</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Free</span><span class="pas1-symbol">;</span><span class="pas1-space">        
+    </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+  </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> </span><span class="pas1-comment">//with   
+</span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+
+</span><span class="pas1-comment">//https://github.com/fabriciocolombo/delphi-rest-client-api/blob/master/src/RestClient.pas
+
+</span><span class="pas1-reservedword">function</span><span class="pas1-space"> TRestClient3_AskChatGPT</span><span class="pas1-symbol">(</span><span class="pas1-identifier">askstream</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+                                  aResponseHeader</span><span class="pas1-symbol">:</span><span class="pas1-identifier">TRestResponseHandler</span><span class="pas1-symbol">):</span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">var</span><span class="pas1-space"> pstrm</span><span class="pas1-symbol">:</span><span class="pas1-space"> TStream</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    JPostdat</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    jo</span><span class="pas1-symbol">:</span><span class="pas1-space"> TJSON</span><span class="pas1-symbol">;</span><span class="pas1-space"> arest</span><span class="pas1-symbol">:</span><span class="pas1-space"> TRestResource</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">begin
+</span><span class="pas1-space">  JPostDat</span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'{'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;model&quot;: &quot;text-davinci-003&quot;,'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;prompt&quot;: &quot;%s&quot;,'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;max_tokens&quot;: 2048,'</span><span class="pas1-symbol">+
+</span><span class="pas1-space">    </span><span class="pas1-string">'&quot;temperature&quot;: 0.15}'</span><span class="pas1-symbol">;
+
+</span><span class="pas1-space">  </span><span class="pas1-reservedword">with</span><span class="pas1-space"> TRestClient</span><span class="pas1-symbol">.</span><span class="pas1-identifier">create</span><span class="pas1-symbol">(</span><span class="pas1-identifier">self</span><span class="pas1-symbol">)</span><span class="pas1-space"> </span><span class="pas1-reservedword">do</span><span class="pas1-space"> </span><span class="pas1-reservedword">begin
+</span><span class="pas1-space">      arest</span><span class="pas1-symbol">:=</span><span class="pas1-space"> Resource</span><span class="pas1-symbol">(</span><span class="pas1-string">'https://api.openai.com/v1/completions'</span><span class="pas1-symbol">);
+</span><span class="pas1-space">      arest</span><span class="pas1-symbol">.</span><span class="pas1-identifier">ContentType</span><span class="pas1-symbol">(</span><span class="pas1-string">'application/json'</span><span class="pas1-symbol">);
+</span><span class="pas1-space">      arest</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Authorization</span><span class="pas1-symbol">(</span><span class="pas1-string">'Bearer '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">CHATGPT_APIKEY2</span><span class="pas1-symbol">);
+</span><span class="pas1-space">      ConnectionType</span><span class="pas1-symbol">:=</span><span class="pas1-space"> hctWinInet</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    </span><span class="pas1-reservedword">try
+</span><span class="pas1-space">      pstrm</span><span class="pas1-symbol">:=</span><span class="pas1-space"> TStringStream</span><span class="pas1-symbol">.</span><span class="pas1-identifier">create</span><span class="pas1-symbol">(</span><span class="pas1-identifier">format</span><span class="pas1-symbol">(</span><span class="pas1-identifier">JPostDat</span><span class="pas1-symbol">,[</span><span class="pas1-identifier">askstream</span><span class="pas1-symbol">]));
+</span><span class="pas1-space">      jo</span><span class="pas1-symbol">:=</span><span class="pas1-space"> TJSON</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Create</span><span class="pas1-symbol">();</span><span class="pas1-space"> 
+      jo</span><span class="pas1-symbol">.</span><span class="pas1-identifier">parse</span><span class="pas1-symbol">(</span><span class="pas1-identifier">arest</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Post</span><span class="pas1-symbol">(</span><span class="pas1-identifier">pstrm</span><span class="pas1-symbol">));</span><span class="pas1-space"> 
+      writeln</span><span class="pas1-symbol">(</span><span class="pas1-string">'responsecode: '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">itoa</span><span class="pas1-symbol">(</span><span class="pas1-identifier">responsecode</span><span class="pas1-symbol">)+</span><span class="pas1-string">' verifycert: '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">botostr</span><span class="pas1-symbol">(</span><span class="pas1-identifier">verifycert</span><span class="pas1-symbol">));
+</span><span class="pas1-space">      result</span><span class="pas1-symbol">:=</span><span class="pas1-space"> jo</span><span class="pas1-symbol">.</span><span class="pas1-identifier">values</span><span class="pas1-symbol">[</span><span class="pas1-string">'choices'</span><span class="pas1-symbol">].</span><span class="pas1-identifier">asarray</span><span class="pas1-symbol">[0].</span><span class="pas1-identifier">asobject</span><span class="pas1-symbol">[</span><span class="pas1-string">'text'</span><span class="pas1-symbol">].</span><span class="pas1-identifier">asstring</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    </span><span class="pas1-reservedword">finally
+</span><span class="pas1-space">      Free</span><span class="pas1-symbol">;
+</span><span class="pas1-space">      jo</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Free</span><span class="pas1-symbol">;
+</span><span class="pas1-space">      pStrm</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Free</span><span class="pas1-symbol">;</span><span class="pas1-space">        
+    </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+  </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> </span><span class="pas1-comment">//with   
+</span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+
+
+</span><span class="pas1-reservedword">procedure</span><span class="pas1-space"> Postcheck2</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">var</span><span class="pas1-space"> S</span><span class="pas1-symbol">:</span><span class="pas1-space"> TStringList</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    M</span><span class="pas1-symbol">:</span><span class="pas1-space"> TStream</span><span class="pas1-symbol">;</span><span class="pas1-space"> IdHTTP1</span><span class="pas1-symbol">:</span><span class="pas1-identifier">TIdHTTP</span><span class="pas1-symbol">;</span><span class="pas1-space">   alj</span><span class="pas1-symbol">:</span><span class="pas1-space"> TJsonListAdapter</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+</span><span class="pas1-reservedword">begin
+</span><span class="pas1-space"> S</span><span class="pas1-symbol">:=</span><span class="pas1-space"> TStringList</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Create</span><span class="pas1-symbol">;
+</span><span class="pas1-space"> M</span><span class="pas1-symbol">:=</span><span class="pas1-space"> TMemoryStream</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Create</span><span class="pas1-symbol">;
+</span><span class="pas1-space"> </span><span class="pas1-reservedword">try
+</span><span class="pas1-space">   S</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Values</span><span class="pas1-symbol">[</span><span class="pas1-string">'Email'</span><span class="pas1-symbol">]:=</span><span class="pas1-space"> </span><span class="pas1-string">'your google account'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">   S</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Values</span><span class="pas1-symbol">[</span><span class="pas1-string">'Passwd'</span><span class="pas1-symbol">]:=</span><span class="pas1-space"> </span><span class="pas1-string">'your password'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">   S</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Values</span><span class="pas1-symbol">[</span><span class="pas1-string">'source'</span><span class="pas1-symbol">]:=</span><span class="pas1-space"> </span><span class="pas1-string">'estream-sqloffice-1.1.1.1'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">   S</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Values</span><span class="pas1-symbol">[</span><span class="pas1-string">'service'</span><span class="pas1-symbol">]:=</span><span class="pas1-space"> </span><span class="pas1-string">'cl'</span><span class="pas1-symbol">;
+
+</span><span class="pas1-space">   IdHTTP1 </span><span class="pas1-symbol">:=</span><span class="pas1-space"> TIdHTTP</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Create</span><span class="pas1-symbol">(</span><span class="pas1-identifier">Self</span><span class="pas1-symbol">);
+</span><span class="pas1-space">   </span><span class="pas1-comment">//IdHTTP1.IOHandler := IdSSLIOHandlerSocketOpenSSL1;
+</span><span class="pas1-space">   IdHTTP1</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Request</span><span class="pas1-symbol">.</span><span class="pas1-identifier">ContentType </span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'application/x-www-form-urlencoded'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">   IdHTTP1</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Post4</span><span class="pas1-symbol">(</span><span class="pas1-string">'https://www.google.com/accounts/ClientLogin'</span><span class="pas1-symbol">,</span><span class="pas1-space"> S</span><span class="pas1-symbol">,</span><span class="pas1-space"> M</span><span class="pas1-symbol">);
+</span><span class="pas1-space">   </span><span class="pas1-reservedword">Memo2</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Lines</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Add</span><span class="pas1-symbol">(</span><span class="pas1-identifier">Format</span><span class="pas1-symbol">(</span><span class="pas1-string">'Response Code: %d'</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-symbol">[</span><span class="pas1-identifier">IdHTTP1</span><span class="pas1-symbol">.</span><span class="pas1-identifier">ResponseCode</span><span class="pas1-symbol">]));
+</span><span class="pas1-space">   </span><span class="pas1-reservedword">Memo2</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Lines</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Add</span><span class="pas1-symbol">(</span><span class="pas1-identifier">Format</span><span class="pas1-symbol">(</span><span class="pas1-string">'Response Text: %s'</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-symbol">[</span><span class="pas1-identifier">IdHTTP1</span><span class="pas1-symbol">.</span><span class="pas1-identifier">ResponseText</span><span class="pas1-symbol">]));
+</span><span class="pas1-space">   M</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Position </span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-number">0;
+</span><span class="pas1-space">   S</span><span class="pas1-symbol">.</span><span class="pas1-identifier">LoadFromStream</span><span class="pas1-symbol">(</span><span class="pas1-identifier">M</span><span class="pas1-symbol">);
+</span><span class="pas1-space">   </span><span class="pas1-reservedword">Memo2</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Lines</span><span class="pas1-symbol">.</span><span class="pas1-identifier">AddStrings</span><span class="pas1-symbol">(</span><span class="pas1-identifier">S</span><span class="pas1-symbol">);
+</span><span class="pas1-space"> </span><span class="pas1-reservedword">finally
+</span><span class="pas1-space">   S</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Free</span><span class="pas1-symbol">;
+</span><span class="pas1-space">   M</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Free</span><span class="pas1-symbol">;
+</span><span class="pas1-space"> </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space"> 
+
+</span><span class="pas1-reservedword">const</span><span class="pas1-space"> PYHOME </span><span class="pas1-symbol">=</span><span class="pas1-space"> </span><span class="pas1-string">'C:\Users\breitsch\AppData\Local\Programs\Python\Python37-32\'</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">const</span><span class="pas1-space"> genfunc </span><span class="pas1-symbol">=</span><span class="pas1-space"> 
+  </span><span class="pas1-string">'def generate_response(prompt):            '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'   response = openai.Completion.create(   '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'      engine=&quot;text-davinci-002&quot;,          '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'      prompt=prompt,                      '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'      max_tokens=60,                      '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'      n=1,                                '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'      stop=None,                          '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'      temperature=0.5,                    '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'     )                                    '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">LF</span><span class="pas1-symbol">+
+</span><span class="pas1-space">  </span><span class="pas1-string">'   return response.choices[0].text.strip()'</span><span class="pas1-symbol">;
+
+</span><span class="pas1-reservedword">function</span><span class="pas1-space"> Python32_AskChatGPT</span><span class="pas1-symbol">(</span><span class="pas1-identifier">feedstream</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">):</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">begin
+with</span><span class="pas1-space"> TPythonEngine</span><span class="pas1-symbol">.</span><span class="pas1-identifier">Create</span><span class="pas1-symbol">(</span><span class="pas1-reservedword">Nil</span><span class="pas1-symbol">)</span><span class="pas1-space"> </span><span class="pas1-reservedword">do</span><span class="pas1-space"> </span><span class="pas1-reservedword">begin</span><span class="pas1-space">                         
+    pythonhome</span><span class="pas1-symbol">:=</span><span class="pas1-space"> PYHOME</span><span class="pas1-symbol">;
+</span><span class="pas1-space">    </span><span class="pas1-reservedword">try</span><span class="pas1-space">                                                           
+      loadDLL</span><span class="pas1-symbol">;</span><span class="pas1-space">                                                    
+      execStr</span><span class="pas1-symbol">(</span><span class="pas1-string">'import openai'</span><span class="pas1-symbol">);</span><span class="pas1-space"> 
+      </span><span class="pas1-comment">//https://github.com/sknetwork-team/scikit-network/issues/498   
+</span><span class="pas1-space">      execstr</span><span class="pas1-symbol">(</span><span class="pas1-string">'openai.api_key = &quot;sk-your-api-key&quot;'</span><span class="pas1-symbol">);</span><span class="pas1-space">             
+      execStr</span><span class="pas1-symbol">(</span><span class="pas1-identifier">genfunc</span><span class="pas1-symbol">);
+</span><span class="pas1-space">      </span><span class="pas1-comment">//execStr('connection.request(&quot;GET&quot;,&quot;api.parse.com/echo&quot;)');
+</span><span class="pas1-space">      println</span><span class="pas1-symbol">(</span><span class="pas1-identifier">evalStr</span><span class="pas1-symbol">(</span><span class="pas1-string">'openai.version'</span><span class="pas1-symbol">));</span><span class="pas1-space">     
+      println</span><span class="pas1-symbol">(</span><span class="pas1-identifier">evalStr</span><span class="pas1-symbol">(</span><span class="pas1-string">'generate_response(&quot;What is the capital of France?&quot;)'</span><span class="pas1-symbol">));</span><span class="pas1-space">       
+    </span><span class="pas1-reservedword">except</span><span class="pas1-space">                                                        
+      raiseError</span><span class="pas1-symbol">;</span><span class="pas1-space">                                                 
+    </span><span class="pas1-reservedword">finally</span><span class="pas1-space"> 
+      unloadDLL</span><span class="pas1-symbol">;</span><span class="pas1-space">                                                       
+      free</span><span class="pas1-symbol">;</span><span class="pas1-space">                                                       
+    </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space">                                                          
+  </span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">end</span><span class="pas1-symbol">;</span><span class="pas1-space">                     
+
+</span><span class="pas1-reservedword">var</span><span class="pas1-space"> aquest</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-reservedword">string</span><span class="pas1-symbol">;
+</span><span class="pas1-reservedword">Begin</span><span class="pas1-space"> </span><span class="pas1-comment">//@main
+</span><span class="pas1-space">  aquest</span><span class="pas1-symbol">:=</span><span class="pas1-space"> URLEncode</span><span class="pas1-symbol">(</span><span class="pas1-string">'A research paper suggests improving GPT-4 performance by 30% by having it consider why it was wrong.'</span><span class="pas1-symbol">);
+</span><span class="pas1-space">  
+   aquest</span><span class="pas1-symbol">:=</span><span class="pas1-space"> </span><span class="pas1-string">'What can yo do with maXbox4?'</span><span class="pas1-symbol">;
+</span><span class="pas1-space">  
+ </span><span class="pas1-comment">// writeln('answer6: '+TALHTTPClient3_AskChatGPT('what can you do with maXbox5?', nil));
+</span><span class="pas1-space">  
+   writeln</span><span class="pas1-symbol">(</span><span class="pas1-string">'Answer9: '</span><span class="pas1-symbol">+</span><span class="pas1-identifier">TRestClient3_AskChatGPT</span><span class="pas1-symbol">(</span><span class="pas1-identifier">aquest</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-reservedword">Nil</span><span class="pas1-symbol">));</span><span class="pas1-space"> 
+  
+ </span><span class="pas1-comment">//writeln(getpython3)
+</span><span class="pas1-reservedword">End</span><span class="pas1-symbol">.
+
+</span><span class="pas1-reservedword">doc</span><span class="pas1-symbol">:</span><span class="pas1-space"> https</span><span class="pas1-symbol">:</span><span class="pas1-comment">//github.com/breitsch2/DelphiChatGPT
+
+</span><span class="pas1-space">     https</span><span class="pas1-symbol">:</span><span class="pas1-comment">//github.com/GussCloud/alcinoe-sources/blob/main/ALWininetHttpClient.pas
+</span><span class="pas1-space">     
+     https</span><span class="pas1-symbol">:</span><span class="pas1-comment">//platform.openai.com/account/usage
+</span><span class="pas1-space">     
+     https</span><span class="pas1-symbol">:</span><span class="pas1-comment">//archive.org/details/maxbox4tutor110demos
+
+</span><span class="pas1-space">     Needs </span><span class="pas1-reservedword">to</span><span class="pas1-space"> be dict</span><span class="pas1-symbol">-</span><span class="pas1-identifier">chrome</span><span class="pas1-symbol">-</span><span class="pas1-identifier">ex </span><span class="pas1-reservedword">or</span><span class="pas1-space"> </span><span class="pas1-reservedword">else</span><span class="pas1-space"> you</span><span class="pas1-string">'ll get a 403 error.
+</span><span class="pas1-space">     Exception</span><span class="pas1-symbol">:</span><span class="pas1-space"> WinHttp</span><span class="pas1-symbol">.</span><span class="pas1-identifier">WinHttpRequest</span><span class="pas1-symbol">:</span><span class="pas1-space"> The operation timed </span><span class="pas1-reservedword">out
+</span><span class="pas1-space">     
+     https</span><span class="pas1-symbol">:</span><span class="pas1-comment">//help.openai.com/en/articles/6882433-incorrect-api-key-provided
+</span><span class="pas1-space">     </span><span class="pas1-symbol">&lt;</span><span class="pas1-identifier">module </span><span class="pas1-string">'openai.version'</span><span class="pas1-space"> from </span><span class="pas1-string">'C:\\Users\\breitsch\\AppData\\Local\\Programs\\Python\\Python37-32\\lib\\site-packages\\openai\\version.py'</span><span class="pas1-symbol">&gt;
+</span><span class="pas1-identifier">Exception</span><span class="pas1-symbol">:</span><span class="pas1-space"> </span><span class="pas1-symbol">&lt;</span><span class="pas1-reservedword">class</span><span class="pas1-space"> </span><span class="pas1-string">'openai.error.AuthenticationError'</span><span class="pas1-symbol">&gt;:</span><span class="pas1-space"> Incorrect API key provided</span><span class="pas1-symbol">:</span><span class="pas1-space"> sk</span><span class="pas1-symbol">-</span><span class="pas1-identifier">your</span><span class="pas1-symbol">-***-</span><span class="pas1-identifier">key</span><span class="pas1-symbol">.</span><span class="pas1-space"> You can find your API key at https</span><span class="pas1-symbol">:</span><span class="pas1-comment">//platform.openai.com/account/api-keys.
+
+</span><span class="pas1-identifier">answer6</span><span class="pas1-symbol">:</span><span class="pas1-space"> 
+
+</span><span class="pas1-reservedword">With</span><span class="pas1-space"> maXbox4</span><span class="pas1-symbol">,</span><span class="pas1-space"> you can create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> debug Windows applications</span><span class="pas1-symbol">,</span><span class="pas1-space"> create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> debug console applications</span><span class="pas1-symbol">,</span><span class="pas1-space"> create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> debug web applications</span><span class="pas1-symbol">,</span><span class="pas1-space"> create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> debug mobile applications</span><span class="pas1-symbol">,</span><span class="pas1-space"> create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> debug games</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-reservedword">and</span><span class="pas1-space"> create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> debug scripts</span><span class="pas1-symbol">.</span><span class="pas1-space"> You can also use ma
+
+MaXbox4 </span><span class="pas1-reservedword">is</span><span class="pas1-space"> a powerful scripting language </span><span class="pas1-reservedword">and</span><span class="pas1-space"> development environment that allows users </span><span class="pas1-reservedword">to</span><span class="pas1-space"> create </span><span class="pas1-reservedword">and</span><span class="pas1-space"> run applications</span><span class="pas1-symbol">,</span><span class="pas1-space"> scripts</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-reservedword">and</span><span class="pas1-space"> games</span><span class="pas1-symbol">.</span><span class="pas1-space"> </span><span class="pas1-reservedword">With</span><span class="pas1-space"> MaXbox4</span><span class="pas1-symbol">,</span><span class="pas1-space"> users can create </span><span class="pas1-number">2</span><span class="pas1-identifier">D </span><span class="pas1-reservedword">and</span><span class="pas1-space"> </span><span class="pas1-number">3</span><span class="pas1-identifier">D games</span><span class="pas1-symbol">,</span><span class="pas1-space"> create interactive applications</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-reservedword">and</span><span class="pas1-space"> develop scripts </span><span class="pas1-reservedword">for</span><span class="pas1-space"> au
+
+ how a sftp</span><span class="pas1-symbol">-</span><span class="pas1-identifier">server gets my </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key</span><span class="pas1-symbol">?
+
+</span><span class="pas1-identifier">A SFTP server will get your </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key when you connect </span><span class="pas1-reservedword">to</span><span class="pas1-space"> </span><span class="pas1-reservedword">it</span><span class="pas1-space"> </span><span class="pas1-reservedword">using</span><span class="pas1-space"> an SSH client</span><span class="pas1-symbol">.</span><span class="pas1-space"> The SSH client will send your </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key </span><span class="pas1-reservedword">to</span><span class="pas1-space"> the SFTP server</span><span class="pas1-symbol">,</span><span class="pas1-space"> which will </span><span class="pas1-reservedword">then</span><span class="pas1-space"> use </span><span class="pas1-reservedword">it</span><span class="pas1-space"> </span><span class="pas1-reservedword">to</span><span class="pas1-space"> authenticate your connection</span><span class="pas1-symbol">.</span><span class="pas1-space">  
+answer6</span><span class="pas1-symbol">:</span><span class="pas1-space"> 
+
+An SFTP server can get your </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key by you sending </span><span class="pas1-reservedword">it</span><span class="pas1-space"> </span><span class="pas1-reservedword">to</span><span class="pas1-space"> the server</span><span class="pas1-symbol">.</span><span class="pas1-space"> This can be done by </span><span class="pas1-reservedword">using</span><span class="pas1-space"> a secure </span><span class="pas1-reservedword">file</span><span class="pas1-space"> transfer protocol </span><span class="pas1-symbol">(</span><span class="pas1-identifier">SFTP</span><span class="pas1-symbol">)</span><span class="pas1-space"> client </span><span class="pas1-reservedword">to</span><span class="pas1-space"> connect </span><span class="pas1-reservedword">to</span><span class="pas1-space"> the server </span><span class="pas1-reservedword">and</span><span class="pas1-space"> upload the </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key </span><span class="pas1-reservedword">file</span><span class="pas1-symbol">.</span><span class="pas1-space"> Alternatively</span><span class="pas1-symbol">,</span><span class="pas1-space"> you can also manually copy </span><span class="pas1-reservedword">and
+</span><span class="pas1-identifier">An SFTP server can get your </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key </span><span class="pas1-reservedword">in</span><span class="pas1-space"> a few different ways</span><span class="pas1-symbol">.</span><span class="pas1-space"> The most common way </span><span class="pas1-reservedword">is</span><span class="pas1-space"> </span><span class="pas1-reservedword">for</span><span class="pas1-space"> you </span><span class="pas1-reservedword">to</span><span class="pas1-space"> upload your </span><span class="pas1-reservedword">public</span><span class="pas1-space"> key </span><span class="pas1-reservedword">to</span><span class="pas1-space"> the server</span><span class="pas1-symbol">.</span><span class="pas1-space"> This can be done </span><span class="pas1-reservedword">using</span><span class="pas1-space"> an SFTP client</span><span class="pas1-symbol">,</span><span class="pas1-space"> such </span><span class="pas1-reservedword">as</span><span class="pas1-space"> FileZilla</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-reservedword">or</span><span class="pas1-space"> through a web</span><span class="pas1-symbol">-</span><span class="pas1-identifier">based </span><span class="pas1-reservedword">interface</span><span class="pas1-symbol">.</span><span class="pas1-space"> You can also provi
+  
+ </span><span class="pas1-reservedword">is</span><span class="pas1-space"> there a difference between earth </span><span class="pas1-reservedword">and</span><span class="pas1-space"> world</span><span class="pas1-symbol">?</span><span class="pas1-space">    
+ answer4</span><span class="pas1-symbol">:</span><span class="pas1-space"> 
+ 
+Yes</span><span class="pas1-symbol">,</span><span class="pas1-space"> there </span><span class="pas1-reservedword">is</span><span class="pas1-space"> a difference between Earth </span><span class="pas1-reservedword">and</span><span class="pas1-space"> World</span><span class="pas1-symbol">.</span><span class="pas1-space"> Earth </span><span class="pas1-reservedword">is</span><span class="pas1-space"> the planet we live </span><span class="pas1-reservedword">on</span><span class="pas1-symbol">,</span><span class="pas1-space"> </span><span class="pas1-reservedword">while</span><span class="pas1-space"> World </span><span class="pas1-reservedword">is</span><span class="pas1-space"> a term used </span><span class="pas1-reservedword">to</span><span class="pas1-space"> refer </span><span class="pas1-reservedword">to</span><span class="pas1-space"> the entire planet</span><span class="pas1-symbol">,</span><span class="pas1-space"> including all </span><span class="pas1-reservedword">of</span><span class="pas1-space"> its inhabitants </span><span class="pas1-reservedword">and</span><span class="pas1-space"> cultures</span><span class="pas1-symbol">.</span><span class="pas1-space">    
+
+</span><span class="pas1-comment">{&quot;id&quot;:&quot;cmpl-6zp3hsVt6HzUdDiCVKVkPcE0umXGm&quot;,&quot;object&quot;:&quot;text_completion&quot;,&quot;created&quot;:1680192297,&quot;model&quot;:&quot;text-davinci-003&quot;,&quot;choices&quot;:[{&quot;text&quot;:&quot;\n\nThe Earth has a mean radius of 3,959 miles (6,371 kilometers).&quot;,&quot;index&quot;:0,&quot;logprobs&quot;:null,&quot;finish_reason
+
+{&quot;id&quot;:&quot;cmpl-6zp8eDsADQT4Br6NKkFT3jJPYKJHU&quot;,&quot;object&quot;:&quot;text_completion&quot;,&quot;created&quot;:1680192604,&quot;model&quot;:&quot;text-davinci-003&quot;,&quot;choices&quot;:[{&quot;text&quot;:&quot;\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is desi
+
+C:\Program Files\Streaming\IBZ2021\maxbox47610\maxbox4&gt;
+
+&gt;&gt;&gt; dir (openai)
+['APIError', 'Audio', 'ChatCompletion', 'Completion', 'ContextVar', 'Customer', 'Deployment', 'Edit', 'Embedding', 'Engine', 'ErrorObject', 'File', 'FineTune', 'Image', 'InvalidRequestError', 'Model', 'Moderation', 'OpenAIError', 'Optional', 'TYP
+
+Hier die Daten zu den Modulen:
+
+Modul 231
+Aarau: 16.10.23 + 19.10.23 + 26.10.23 + 27.10.23 + 02.11.23
+Basel: 16.09.23 + 23.10.23 + 06.11.23 + 09.11.23 + 16.11.23
+
+ 
+     
+
+
+</span></code></pre><!--EndFragment--></body>
+</html>

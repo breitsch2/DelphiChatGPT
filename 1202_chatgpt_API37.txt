@@ -1,0 +1,213 @@
+program ChatGPT_API35_mX4_3;
+
+//https://github.com/ssut/py-googletrans/issues/268
+//TODO: test with another api-client : THTTPSender  plus try except()
+//https://github.com/breitsch2/DelphiChatGPT
+//https://softwareschule.code.blog/2023/04/01/how-to-chat-with-gpt/
+
+const
+  AURLS='https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=%s&tl=%s&q=%s';
+  AURL='https://translate.googleapis.com/translate_a/single';
+  UAGENT ='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0';
+  
+  TESTRES_JSON = '{"id":"cmpl-6zpQsiothxZUox0WCKWNdJKj6VDa7","object":"text_completion","created":1680193734,"model":"text-davinci-003","choices":[{"text":"\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is designed to be easy to use and provides a powerful scripting language for creating applications, games, and other software. maXbox4 is based on the popular PASCAL language and includes a wide range of features, including support for object-oriented programming, graphical user interfaces, and more.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":77,"total_tokens":83}} ';
+
+
+Const CHATGPT_APIKEY1 = 'sk-Lx_________use your own key first_______________';
+                                                               
+{$I .\OPENAIAPIKEY.INC}
+
+//https://github.com/GussCloud/alcinoe-sources/blob/main/ALWininetHttpClient.pas
+//https://github.com/GussCloud/alcinoe-sources/blob/main/ALHttpClient.pas
+
+function TALHTTPClient3_AskChatGPT(askstream: string; 
+                               aResponseHeader:TALHTTPResponseHeader2):string;
+var pstrm: TStream;
+    JPostdat, vURL: string;
+    jo: TJSON;
+begin
+  JPostDat:= '{'+
+    '"model": "text-davinci-003",'+
+    '"prompt": "%s",'+
+    '"max_tokens": 2048,'+
+    '"temperature": 0.15}';
+
+  with TALWininetHttpClient2.create do begin
+    vURL:= 'https://api.openai.com/v1/completions';
+    //RequestHeader.UserAgent:= UAGENT;
+    RequestHeader.ContentType:= 'application/json';
+    RequestHeader.Authorization:= 'Bearer '+CHATGPT_APIKEY2;
+    try
+      pstrm:= TStringStream.create(format(JPostDat,[askstream]));
+      jo:= TJSON.Create(); 
+      jo.parse(Post3(vURL, pstrm, [])) 
+      result:= jo.values['choices'].asarray[0].asobject['text'].asstring;
+    finally
+      Free;
+      jo.Free;
+      pStrm.Free;        
+    end; 
+  end; //with   
+end; 
+
+//https://github.com/fabriciocolombo/delphi-rest-client-api/blob/master/src/RestClient.pas
+
+function TRestClient3_AskChatGPT(askstream: string; 
+                                  aResponseHeader:TRestResponseHandler):string;
+var pstrm: TStream;
+    JPostdat: string;
+    jo: TJSON; arest: TRestResource;
+begin
+  JPostDat:= '{'+
+    '"model": "text-davinci-003",'+
+    '"prompt": "%s",'+
+    '"max_tokens": 2048,'+
+    '"temperature": 0.15}';
+
+  with TRestClient.create(self) do begin
+      arest:= Resource('https://api.openai.com/v1/completions');
+      arest.ContentType('application/json');
+      arest.Authorization('Bearer '+CHATGPT_APIKEY2);
+      ConnectionType:= hctWinInet;
+    try
+      pstrm:= TStringStream.create(format(JPostDat,[askstream]));
+      jo:= TJSON.Create(); 
+      jo.parse(arest.Post(pstrm)); 
+      writeln('responsecode: '+itoa(responsecode)+' verifycert: '+botostr(verifycert));
+      result:= jo.values['choices'].asarray[0].asobject['text'].asstring;
+    finally
+      Free;
+      jo.Free;
+      pStrm.Free;        
+    end; 
+  end; //with   
+end; 
+
+
+procedure Postcheck2;
+var S: TStringList;
+    M: TStream; IdHTTP1:TIdHTTP;   alj: TJsonListAdapter; 
+begin
+ S:= TStringList.Create;
+ M:= TMemoryStream.Create;
+ try
+   S.Values['Email']:= 'your google account';
+   S.Values['Passwd']:= 'your password';
+   S.Values['source']:= 'estream-sqloffice-1.1.1.1';
+   S.Values['service']:= 'cl';
+
+   IdHTTP1 := TIdHTTP.Create(Self);
+   //IdHTTP1.IOHandler := IdSSLIOHandlerSocketOpenSSL1;
+   IdHTTP1.Request.ContentType := 'application/x-www-form-urlencoded';
+   IdHTTP1.Post4('https://www.google.com/accounts/ClientLogin', S, M);
+   Memo2.Lines.Add(Format('Response Code: %d', [IdHTTP1.ResponseCode]));
+   Memo2.Lines.Add(Format('Response Text: %s', [IdHTTP1.ResponseText]));
+   M.Position := 0;
+   S.LoadFromStream(M);
+   Memo2.Lines.AddStrings(S);
+ finally
+   S.Free;
+   M.Free;
+ end;
+end; 
+
+const PYHOME = 'C:\Users\breitsch\AppData\Local\Programs\Python\Python37-32\';
+const genfunc = 
+  'def generate_response(prompt):            '+LF+
+  '   response = openai.Completion.create(   '+LF+
+  '      engine="text-davinci-002",          '+LF+
+  '      prompt=prompt,                      '+LF+
+  '      max_tokens=60,                      '+LF+
+  '      n=1,                                '+LF+
+  '      stop=None,                          '+LF+
+  '      temperature=0.5,                    '+LF+
+  '     )                                    '+LF+
+  '   return response.choices[0].text.strip()';
+
+function Python32_AskChatGPT(feedstream: string): string;
+begin
+with TPythonEngine.Create(Nil) do begin                         
+    pythonhome:= PYHOME;
+    try                                                           
+      loadDLL;                                                    
+      execStr('import openai'); 
+      //https://github.com/sknetwork-team/scikit-network/issues/498   
+      execstr('openai.api_key = "sk-your-api-key"');             
+      execStr(genfunc);
+      //execStr('connection.request("GET","api.parse.com/echo")');
+      println(evalStr('openai.version'));     
+      println(evalStr('generate_response("What is the capital of France?")'));       
+    except                                                        
+      raiseError;                                                 
+    finally 
+      unloadDLL;                                                       
+      free;                                                       
+    end;                                                          
+  end;
+end;                     
+
+var aquest: string;
+Begin //@main
+  aquest:= URLEncode('A research paper suggests improving GPT-4 performance by 30% by having it consider why it was wrong.');
+  
+   aquest:= 'What can yo do with maXbox4?';
+  
+ // writeln('answer6: '+TALHTTPClient3_AskChatGPT('what can you do with maXbox5?', nil));
+  
+   writeln('Answer9: '+TRestClient3_AskChatGPT(aquest, Nil)); 
+  
+ //writeln(getpython3)
+End.
+
+doc: https://github.com/breitsch2/DelphiChatGPT
+
+     https://github.com/GussCloud/alcinoe-sources/blob/main/ALWininetHttpClient.pas
+     
+     https://platform.openai.com/account/usage
+     
+     https://archive.org/details/maxbox4tutor110demos
+
+     Needs to be dict-chrome-ex or else you'll get a 403 error.
+     Exception: WinHttp.WinHttpRequest: The operation timed out
+     
+     https://help.openai.com/en/articles/6882433-incorrect-api-key-provided
+     <module 'openai.version' from 'C:\\Users\\breitsch\\AppData\\Local\\Programs\\Python\\Python37-32\\lib\\site-packages\\openai\\version.py'>
+Exception: <class 'openai.error.AuthenticationError'>: Incorrect API key provided: sk-your-***-key. You can find your API key at https://platform.openai.com/account/api-keys.
+
+answer6: 
+
+With maXbox4, you can create and debug Windows applications, create and debug console applications, create and debug web applications, create and debug mobile applications, create and debug games, and create and debug scripts. You can also use ma
+
+MaXbox4 is a powerful scripting language and development environment that allows users to create and run applications, scripts, and games. With MaXbox4, users can create 2D and 3D games, create interactive applications, and develop scripts for au
+
+ how a sftp-server gets my public key?
+
+A SFTP server will get your public key when you connect to it using an SSH client. The SSH client will send your public key to the SFTP server, which will then use it to authenticate your connection.  
+answer6: 
+
+An SFTP server can get your public key by you sending it to the server. This can be done by using a secure file transfer protocol (SFTP) client to connect to the server and upload the public key file. Alternatively, you can also manually copy and
+An SFTP server can get your public key in a few different ways. The most common way is for you to upload your public key to the server. This can be done using an SFTP client, such as FileZilla, or through a web-based interface. You can also provi
+  
+ is there a difference between earth and world?    
+ answer4: 
+ 
+Yes, there is a difference between Earth and World. Earth is the planet we live on, while World is a term used to refer to the entire planet, including all of its inhabitants and cultures.    
+
+{"id":"cmpl-6zp3hsVt6HzUdDiCVKVkPcE0umXGm","object":"text_completion","created":1680192297,"model":"text-davinci-003","choices":[{"text":"\n\nThe Earth has a mean radius of 3,959 miles (6,371 kilometers).","index":0,"logprobs":null,"finish_reason
+
+{"id":"cmpl-6zp8eDsADQT4Br6NKkFT3jJPYKJHU","object":"text_completion","created":1680192604,"model":"text-davinci-003","choices":[{"text":"\n\nmaXbox4 is a free and open source scripting language and development environment for Windows. It is desi
+
+C:\Program Files\Streaming\IBZ2021\maxbox47610\maxbox4>
+
+>>> dir (openai)
+['APIError', 'Audio', 'ChatCompletion', 'Completion', 'ContextVar', 'Customer', 'Deployment', 'Edit', 'Embedding', 'Engine', 'ErrorObject', 'File', 'FineTune', 'Image', 'InvalidRequestError', 'Model', 'Moderation', 'OpenAIError', 'Optional', 'TYP
+
+Hier die Daten zu den Modulen:
+
+Modul 231
+Aarau: 16.10.23 + 19.10.23 + 26.10.23 + 27.10.23 + 02.11.23
+Basel: 16.09.23 + 23.10.23 + 06.11.23 + 09.11.23 + 16.11.23
+
+ 
+     
+
